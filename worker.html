@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+    <meta charset="UTF-8">
+    <!-- <meta meta="google" translate="no"> -->
+    <meta name="google" content="notranslate">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body translate="no">
+    hello world
+    <button id="btn1">阻塞 主页面的js线程</button>
+    <button id="btn2">阻塞 webWorker的js线程</button>
+    <button id="btn3">阻塞 主页面的渲染线程</button>
+    <button id="btn10">验证主页面 js线程和渲染线程 是否阻塞</button>
+
+    
+
+    <script>
+        const btn1 = document.querySelector('#btn1')
+        const btn2 = document.querySelector('#btn2')
+        const btn3 = document.querySelector('#btn3')
+
+        const btn10 = document.querySelector('#btn10')
+
+        btn1.addEventListener('click', () => {
+            blockTask()
+        })
+
+        btn2.addEventListener('click', () => {
+            worker.postMessage({
+                pause: true
+            })
+        })
+
+        btn3.addEventListener('click', () => {
+            const canvas = document.createElement('canvas')
+            document.body.appendChild(canvas)
+            canvas.width = 15000;
+            canvas.height = 15000;
+            const ctx = canvas.getContext('2d')
+
+            const image = new Image()
+            image.src = './bigimage.png'
+            image.onload = function() {
+                draw()
+            }
+            function draw() {
+                ctx.drawImage(image, 0, 0);
+                requestAnimationFrame(draw)
+            }
+        })
+
+        btn10.addEventListener('click', () => {
+            const el = document.createElement('div')
+            el.innerHTML = 'hello'
+            document.body.appendChild(el)
+        })
+
+        const canvas1 = document.createElement('canvas')
+        document.body.appendChild(canvas1)
+        canvas1.width = 150;
+        canvas1.height = 150;
+        let count = 0;
+        function draw() {
+            const ctx = canvas1.getContext('2d');
+            ctx.fillStyle = 'skyblue'
+            ctx.fillRect(0, 0, canvas1.width, canvas1.height);
+
+            ctx.fillStyle = 'black'
+            ctx.fillText(`主页面 渲染的canvas ${count}`, 10, 10);
+            count++
+            
+            requestAnimationFrame(draw)
+        }
+        draw()
+
+        const canvas2 = document.createElement('canvas')
+        document.body.appendChild(canvas2)
+        canvas2.width = 150;
+        canvas2.height = 150;
+        const offscreenCanvas = canvas2.transferControlToOffscreen()
+        const worker = new Worker('./worker.js')
+        worker.postMessage({
+            canvas: offscreenCanvas
+        }, [offscreenCanvas])
+
+        function blockTask() {
+            let count = 0;
+            while (count < 10000000000) {
+                count++;
+            }
+            console.log('finish')
+        }
+
+    </script>
+</body>
+</html>
